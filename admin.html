@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0b0d10">
+<title>Cocina · Z18</title>
+<link rel="icon" href="assets/logo.webp" type="image/webp">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<!--
+  Z18 · PANTALLA DE COCINA (KDS) — admin.html + admin.css + admin.js
+  Muestra en vivo los pedidos que los clientes mandan por WhatsApp desde la web (colección «pedidos» de Firestore) y deja cambiarles el estado:
+  Pendiente → En preparación → Listo / En camino → Entregado (o Cancelado). Solo entra el personal (cuenta de correo y contraseña + documento staff/{uid}).
+  Esta página NO está enlazada desde la web: se abre escribiendo /admin.html. Cómo dejarla funcionando: ver el comentario de arriba de admin.js y el archivo LEEME.
+-->
+<!-- Íconos: Font Awesome Free 6.7.2 (https://fontawesome.com) · licencia CC BY 4.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden">
+<symbol id="i-arrow-rotate-left" viewBox="0 0 512 512"><path d="M125.7 160l50.3 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L48 224c-17.7 0-32-14.3-32-32L16 64c0-17.7 14.3-32 32-32s32 14.3 32 32l0 51.2L97.6 97.6c87.5-87.5 229.3-87.5 316.8 0s87.5 229.3 0 316.8s-229.3 87.5-316.8 0c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0c62.5 62.5 163.8 62.5 226.3 0s62.5-163.8 0-226.3s-163.8-62.5-226.3 0L125.7 160z"/></symbol>
+<symbol id="i-bell" viewBox="0 0 448 512"><path d="M224 0c-17.7 0-32 14.3-32 32l0 19.2C119 66 64 130.6 64 208l0 18.8c0 47-17.3 92.4-48.5 127.6l-7.4 8.3c-8.4 9.4-10.4 22.9-5.3 34.4S19.4 416 32 416l384 0c12.6 0 24-7.4 29.2-18.9s3.1-25-5.3-34.4l-7.4-8.3C401.3 319.2 384 273.9 384 226.8l0-18.8c0-77.4-55-142-128-156.8L256 32c0-17.7-14.3-32-32-32zm45.3 493.3c12-12 18.7-28.3 18.7-45.3l-64 0-64 0c0 17 6.7 33.3 18.7 45.3s28.3 18.7 45.3 18.7s33.3-6.7 45.3-18.7z"/></symbol>
+<symbol id="i-check" viewBox="0 0 448 512"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></symbol>
+<symbol id="i-expand" viewBox="0 0 448 512"><path d="M32 32C14.3 32 0 46.3 0 64l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 32zM64 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM448 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96z"/></symbol>
+<symbol id="i-eye" viewBox="0 0 576 512"><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM144 256a144 144 0 1 1 288 0 144 144 0 1 1 -288 0zm144-64c0 35.3-28.7 64-64 64c-7.1 0-13.9-1.2-20.3-3.3c-5.5-1.8-11.9 1.6-11.7 7.4c.3 6.9 1.3 13.8 3.2 20.7c13.7 51.2 66.4 81.6 117.6 67.9s81.6-66.4 67.9-117.6c-11.1-41.5-47.8-69.4-88.6-71.1c-5.8-.2-9.2 6.1-7.4 11.7c2.1 6.4 3.3 13.2 3.3 20.3z"/></symbol>
+<symbol id="i-eye-slash" viewBox="0 0 640 512"><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c8.4-19.3 10.6-41.4 4.8-63.3c-11.1-41.5-47.8-69.4-88.6-71.1c-5.8-.2-9.2 6.1-7.4 11.7c2.1 6.4 3.3 13.2 3.3 20.3c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zM373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5L373 389.9z"/></symbol>
+<symbol id="i-location-dot" viewBox="0 0 384 512"><path d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/></symbol>
+<symbol id="i-motorcycle" viewBox="0 0 640 512"><path d="M280 32c-13.3 0-24 10.7-24 24s10.7 24 24 24l57.7 0 16.4 30.3L256 192l-45.3-45.3c-12-12-28.3-18.7-45.3-18.7L64 128c-17.7 0-32 14.3-32 32l0 32 96 0c88.4 0 160 71.6 160 160c0 11-1.1 21.7-3.2 32l70.4 0c-2.1-10.3-3.2-21-3.2-32c0-52.2 25-98.6 63.7-127.8l15.4 28.6C402.4 276.3 384 312 384 352c0 70.7 57.3 128 128 128s128-57.3 128-128s-57.3-128-128-128c-13.5 0-26.5 2.1-38.7 6L418.2 128l61.8 0c17.7 0 32-14.3 32-32l0-32c0-17.7-14.3-32-32-32l-20.4 0c-7.5 0-14.7 2.6-20.5 7.4L391.7 78.9l-14-26c-7-12.9-20.5-21-35.2-21L280 32zM462.7 311.2l28.2 52.2c6.3 11.7 20.9 16 32.5 9.7s16-20.9 9.7-32.5l-28.2-52.2c2.3-.3 4.7-.4 7.1-.4c35.3 0 64 28.7 64 64s-28.7 64-64 64s-64-28.7-64-64c0-15.5 5.5-29.7 14.7-40.8zM187.3 376c-9.5 23.5-32.5 40-59.3 40c-35.3 0-64-28.7-64-64s28.7-64 64-64c26.9 0 49.9 16.5 59.3 40l66.4 0C242.5 268.8 190.5 224 128 224C57.3 224 0 281.3 0 352s57.3 128 128 128c62.5 0 114.5-44.8 125.8-104l-66.4 0zM128 384a32 32 0 1 0 0-64 32 32 0 1 0 0 64z"/></symbol>
+<symbol id="i-right-from-bracket" viewBox="0 0 512 512"><path d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z"/></symbol>
+<symbol id="i-store" viewBox="0 0 576 512"><path d="M547.6 103.8L490.3 13.1C485.2 5 476.1 0 466.4 0L109.6 0C99.9 0 90.8 5 85.7 13.1L28.3 103.8c-29.6 46.8-3.4 111.9 51.9 119.4c4 .5 8.1 .8 12.1 .8c26.1 0 49.3-11.4 65.2-29c15.9 17.6 39.1 29 65.2 29c26.1 0 49.3-11.4 65.2-29c15.9 17.6 39.1 29 65.2 29c26.2 0 49.3-11.4 65.2-29c16 17.6 39.1 29 65.2 29c4.1 0 8.1-.3 12.1-.8c55.5-7.4 81.8-72.5 52.1-119.4zM499.7 254.9c0 0 0 0-.1 0c-5.3 .7-10.7 1.1-16.2 1.1c-12.4 0-24.3-1.9-35.4-5.3L448 384l-320 0 0-133.4c-11.2 3.5-23.2 5.4-35.6 5.4c-5.5 0-11-.4-16.3-1.1l-.1 0c-4.1-.6-8.1-1.3-12-2.3L64 384l0 64c0 35.3 28.7 64 64 64l320 0c35.3 0 64-28.7 64-64l0-64 0-131.4c-4 1-8 1.8-12.3 2.3z"/></symbol>
+<symbol id="i-utensils" viewBox="0 0 448 512"><path d="M416 0C400 0 288 32 288 176l0 112c0 35.3 28.7 64 64 64l32 0 0 128c0 17.7 14.3 32 32 32s32-14.3 32-32l0-128 0-112 0-208c0-17.7-14.3-32-32-32zM64 16C64 7.8 57.9 1 49.7 .1S34.2 4.6 32.4 12.5L2.1 148.8C.7 155.1 0 161.5 0 167.9c0 45.9 35.1 83.6 80 87.7L80 480c0 17.7 14.3 32 32 32s32-14.3 32-32l0-224.4c44.9-4.1 80-41.8 80-87.7c0-6.4-.7-12.8-2.1-19.1L191.6 12.5c-1.8-8-9.3-13.3-17.4-12.4S160 7.8 160 16l0 134.2c0 5.4-4.4 9.8-9.8 9.8c-5.1 0-9.3-3.9-9.8-9L127.9 14.6C127.2 6.3 120.3 0 112 0s-15.2 6.3-15.9 14.6L83.7 151c-.5 5.1-4.7 9-9.8 9c-5.4 0-9.8-4.4-9.8-9.8L64 16zm48.3 152l-.3 0-.3 0 .3-.7 .3 .7z"/></symbol>
+<symbol id="i-volume-high" viewBox="0 0 640 512"><path d="M533.6 32.5C598.5 85.2 640 165.8 640 256s-41.5 170.7-106.4 223.5c-10.3 8.4-25.4 6.8-33.8-3.5s-6.8-25.4 3.5-33.8C557.5 398.2 592 331.2 592 256s-34.5-142.2-88.7-186.3c-10.3-8.4-11.8-23.5-3.5-33.8s23.5-11.8 33.8-3.5zM473.1 107c43.2 35.2 70.9 88.9 70.9 149s-27.7 113.8-70.9 149c-10.3 8.4-25.4 6.8-33.8-3.5s-6.8-25.4 3.5-33.8C475.3 341.3 496 301.1 496 256s-20.7-85.3-53.2-111.8c-10.3-8.4-11.8-23.5-3.5-33.8s23.5-11.8 33.8-3.5zm-60.5 74.5C434.1 199.1 448 225.9 448 256s-13.9 56.9-35.4 74.5c-10.3 8.4-25.4 6.8-33.8-3.5s-6.8-25.4 3.5-33.8C393.1 284.4 400 271 400 256s-6.9-28.4-17.7-37.3c-10.3-8.4-11.8-23.5-3.5-33.8s23.5-11.8 33.8-3.5zM301.1 34.8C312.6 40 320 51.4 320 64l0 384c0 12.6-7.4 24-18.9 29.2s-25 3.1-34.4-5.3L131.8 352 64 352c-35.3 0-64-28.7-64-64l0-64c0-35.3 28.7-64 64-64l67.8 0L266.7 40.1c9.4-8.4 22.9-10.4 34.4-5.3z"/></symbol>
+<symbol id="i-volume-xmark" viewBox="0 0 576 512"><path d="M301.1 34.8C312.6 40 320 51.4 320 64l0 384c0 12.6-7.4 24-18.9 29.2s-25 3.1-34.4-5.3L131.8 352 64 352c-35.3 0-64-28.7-64-64l0-64c0-35.3 28.7-64 64-64l67.8 0L266.7 40.1c9.4-8.4 22.9-10.4 34.4-5.3zM425 167l55 55 55-55c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9l-55 55 55 55c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0l-55-55-55 55c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l55-55-55-55c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0z"/></symbol>
+<symbol id="i-xmark" viewBox="0 0 384 512"><path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></symbol>
+<symbol id="i-whatsapp" viewBox="0 0 448 512"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/></symbol>
+</svg>
+
+<!-- ═══ Cargando ═══ -->
+<main id="vCargando" class="pantalla centro" aria-live="polite">
+  <p class="cargando"><span class="giro" aria-hidden="true"></span><span id="cargandoTexto">Cargando…</span></p>
+  <button id="reintentarCarga" class="btn" type="button" hidden>Reintentar</button>
+</main>
+
+<!-- ═══ 1) Ingreso del personal ═══ -->
+<main id="vLogin" class="pantalla centro" hidden>
+  <form id="formLogin" class="tarjeta login" novalidate>
+    <h1 class="marca">Z18 <span>Cocina</span></h1>
+    <p class="suave">Ingresá con la cuenta del personal.</p>
+    <label for="lgEmail">Correo</label>
+    <input id="lgEmail" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+    <label for="lgPass">Contraseña</label>
+    <div class="clave">
+      <input id="lgPass" name="password" type="password" autocomplete="current-password" required>
+      <button id="verClave" class="btn icono" type="button" aria-label="Mostrar la contraseña" aria-pressed="false"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-eye"/></svg></button>
+    </div>
+    <p id="lgError" class="error" role="alert"></p>
+    <button id="lgEntrar" class="btn principal grande" type="submit">Entrar</button>
+  </form>
+</main>
+
+<!-- ═══ 2) Cuenta sin permiso ═══ -->
+<main id="vSinPermiso" class="pantalla centro" hidden>
+  <section class="tarjeta login" aria-labelledby="spTitulo">
+    <h1 id="spTitulo" class="marca">Sin permiso</h1>
+    <p id="spTexto" class="suave">Esta cuenta puede entrar, pero todavía no es del personal de cocina.</p>
+    <p class="suave">Para habilitarla: en Firebase → Firestore → colección <b>staff</b> → «Agregar documento» con este ID (el campo que quieras, por ejemplo <code>rol: "cocina"</code>):</p>
+    <p><code id="spUid" class="uid"></code></p>
+    <p id="spError" class="error" role="alert"></p>
+    <div class="fila">
+      <button id="spReintentar" class="btn principal" type="button">Ya lo creé: reintentar</button>
+      <button id="spSalir" class="btn" type="button">Salir</button>
+    </div>
+  </section>
+</main>
+
+<!-- ═══ 3) Tablero ═══ -->
+<div id="vTablero" hidden>
+  <header class="barra">
+    <h1 class="marca">Z18 <span>Cocina</span></h1>
+    <p id="conexion" class="chip" role="status" data-estado="conectando"><span class="punto" aria-hidden="true"></span><span id="conexionTexto">Conectando…</span></p>
+    <p id="resumen" class="resumen" aria-label="Resumen de pedidos">
+      <span class="r-pendiente"><b id="nPendiente">0</b> pendientes</span>
+      <span class="r-preparando"><b id="nPreparando">0</b> en preparación</span>
+      <span class="r-listo"><b id="nListo">0</b> listos</span>
+    </p>
+    <div class="herramientas">
+      <span id="reloj" class="reloj" aria-label="Hora de Montevideo"></span>
+      <button id="btnSonido" class="btn icono" type="button" aria-pressed="false" aria-label="Silenciar la alerta"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-volume-high"/></svg></button>
+      <button id="btnPantalla" class="btn icono" type="button" aria-label="Pantalla completa"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-expand"/></svg></button>
+      <button id="btnSalir" class="btn" type="button"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-right-from-bracket"/></svg><span>Salir</span></button>
+    </div>
+  </header>
+
+  <p id="avisoSilencio" class="franja roja" role="status" hidden>Sonido silenciado: los pedidos nuevos NO van a sonar. <button id="btnReactivar" class="btn chico" type="button">Activar</button></p>
+  <p id="avisoAudio" class="franja roja" role="status" hidden>El sonido se pausó (el navegador lo frenó). <button id="btnRearmar" class="btn chico" type="button">Tocá para reactivarlo</button></p>
+  <p id="avisoRed" class="franja amarilla" role="status" hidden>Sin conexión: se muestran los últimos pedidos que llegaron. Los cambios de estado se mandan solos cuando vuelva internet.</p>
+  <p id="avisoError" class="franja roja" role="alert" hidden><span id="avisoErrorTexto"></span> <button id="btnReintentar" class="btn chico" type="button">Reintentar</button></p>
+  <p id="alertaNuevos" class="franja alerta" role="status" hidden><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-bell"/></svg> <b id="alertaTexto"></b> <button id="btnVer" class="btn chico" type="button">Ver</button> <button id="btnSilenciar" class="btn chico" type="button">Silenciar alerta</button></p>
+
+  <nav id="pestanas" class="pestanas" aria-label="Estados de los pedidos">
+    <button type="button" data-ver="pendiente" aria-pressed="true">Pendientes <b id="pNpendiente">0</b></button>
+    <button type="button" data-ver="preparando" aria-pressed="false">En preparación <b id="pNpreparando">0</b></button>
+    <button type="button" data-ver="listo" aria-pressed="false">Listos <b id="pNlisto">0</b></button>
+    <button type="button" data-ver="entregado" aria-pressed="false">Entregados <b id="pNentregado">0</b></button>
+  </nav>
+
+  <main id="tablero" class="tablero" data-ver="pendiente">
+    <section class="col" data-col="pendiente" aria-labelledby="hPendiente">
+      <h2 id="hPendiente"><span>Pendientes</span><b id="cNpendiente">0</b></h2>
+      <div id="lPendiente" class="lista"></div>
+      <p class="vacio" data-vacio="pendiente">No hay pedidos pendientes.</p>
+    </section>
+    <section class="col" data-col="preparando" aria-labelledby="hPreparando">
+      <h2 id="hPreparando"><span>En preparación</span><b id="cNpreparando">0</b></h2>
+      <div id="lPreparando" class="lista"></div>
+      <p class="vacio" data-vacio="preparando">Nada en preparación.</p>
+    </section>
+    <section class="col" data-col="listo" aria-labelledby="hListo">
+      <h2 id="hListo"><span>Listos / En camino</span><b id="cNlisto">0</b></h2>
+      <div id="lListo" class="lista"></div>
+      <p class="vacio" data-vacio="listo">Nada listo para entregar.</p>
+    </section>
+    <section class="col" data-col="entregado" aria-labelledby="hEntregado">
+      <h2 id="hEntregado"><span>Entregados</span><b id="cNentregado">0</b></h2>
+      <div id="lEntregado" class="lista"></div>
+      <p class="vacio" data-vacio="entregado">Todavía no entregaste ninguno.</p>
+      <p id="masEntregados" class="suave chico" hidden></p>
+    </section>
+  </main>
+
+  <details id="cancelados" class="cancelados" hidden>
+    <summary>Cancelados <b id="cNcancelado">0</b></summary>
+    <div id="lCancelado" class="lista"></div>
+  </details>
+</div>
+
+<!-- ═══ Alerta sonora: el navegador solo la deja sonar después de un toque, por eso el botón es obligatorio ═══ -->
+<div id="vSonido" class="pantalla centro velo" role="dialog" aria-modal="true" aria-labelledby="snTitulo" hidden>
+  <section class="tarjeta login">
+    <h2 id="snTitulo" class="marca">Empezar el turno</h2>
+    <p class="suave">Para que suene la alerta cuando entre un pedido, el navegador pide que toques este botón. También mantiene la pantalla encendida.</p>
+    <button id="activarSonido" class="btn principal grande" type="button"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-volume-high"/></svg><span>Activar sonido</span></button>
+    <p id="snSinAudio" class="error" role="alert" hidden>Este navegador no permite sonido: vas a ver las alertas solo en la pantalla.</p>
+    <button id="continuarSinSonido" class="btn" type="button" hidden>Continuar sin sonido</button>
+  </section>
+</div>
+
+<div id="avisos" class="avisos" role="status" aria-live="polite"></div>
+<p id="anuncio" class="solo-lectores" role="status" aria-live="polite"></p>
+<script src="admin.js"></script>
+</body>
+</html>

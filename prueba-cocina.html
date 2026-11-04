@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="dark">
+<title>Prueba de cocina · Z18</title>
+<style>
+  :root { --bg: #0b0d10; --panel: #13171c; --borde: #343d49; --texto: #e9edf2; --suave: #aab4c0; --naranja: #ff5a14; --ok: #35d07f; --mal: #ff9a9a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--texto); font: 400 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; display: grid; place-items: center; padding: 1.25rem; }
+  main { width: min(100%, 34rem); background: var(--panel); border: 1px solid var(--borde); border-radius: 16px; padding: 1.5rem; }
+  h1 { margin: 0 0 .75rem; font-size: 1.5rem; }
+  h1 span { color: var(--naranja); }
+  p { margin: 0 0 1rem; }
+  .suave { color: var(--suave); font-size: .92rem; }
+  a { color: #8cc4ff; }
+  button { width: 100%; min-height: 3.5rem; border: 0; border-radius: 12px; background: var(--naranja); color: #1a0a00; font-family: inherit; font-weight: 800; font-size: 1.1rem; line-height: 1; cursor: pointer; }
+  button:disabled { opacity: .6; cursor: default; }
+  button:focus-visible, summary:focus-visible, a:focus-visible { outline: 3px solid #ffb700; outline-offset: 2px; }
+  #resultado { margin: 1rem 0 0; min-height: 1.5rem; font-weight: 700; }
+  #resultado.ok { color: var(--ok); }
+  #resultado.mal { color: var(--mal); }
+  details { margin-top: 1rem; color: var(--suave); font-size: .9rem; }
+  summary { cursor: pointer; }
+  pre { margin: .5rem 0 0; padding: .75rem; background: #0e1115; border: 1px solid var(--borde); border-radius: 10px; white-space: pre-wrap; word-break: break-word; font-size: .82rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Prueba de <span>cocina</span></h1>
+  <p>Manda <strong>un pedido de prueba</strong> a la pantalla de cocina, igual que lo hace un cliente al tocar «Enviar pedido por WhatsApp». Sirve para comprobar que Firebase, las reglas y la pantalla están bien conectados.</p>
+  <p class="suave">Primero abrí <a href="admin.html" target="_blank" rel="noopener">la pantalla de cocina</a> en otra pestaña (o en otro dispositivo), entrá con la cuenta del personal y activá el sonido. Después tocá el botón: el pedido tiene que aparecer en un par de segundos, con la alerta sonora.</p>
+  <button type="button" id="enviar">Mandar pedido de prueba</button>
+  <p id="resultado" role="status" aria-live="polite"></p>
+  <details>
+    <summary>Detalles técnicos</summary>
+    <pre id="detalle">Todavía no se envió nada.</pre>
+  </details>
+  <p class="suave" style="margin-top:1rem">Cuando termines de probar, borrá este archivo (prueba-cocina.html) del repositorio.</p>
+</main>
+<script src="cocina.js"></script>
+<script>
+'use strict';
+(() => {
+  const $ = id => document.getElementById(id);
+  const AYUDA = {
+    'auth/operation-not-allowed': 'Falta habilitar el ingreso «Anónimo»: Firebase → Authentication → Sign-in method → Anónimo → Habilitar.',
+    'auth/admin-restricted-operation': 'Falta habilitar el ingreso «Anónimo»: Firebase → Authentication → Sign-in method → Anónimo → Habilitar.',
+    'permission-denied': 'Las reglas de Firestore rechazaron el pedido. Revisá que hayas publicado las reglas nuevas y que el bloque quede DENTRO de «match /databases/{database}/documents { … }».',
+    'unavailable': 'No hay conexión con Firebase. Revisá internet e intentá de nuevo.',
+    'auth/network-request-failed': 'No hay conexión con Firebase. Revisá internet e intentá de nuevo.'
+  };
+  let n = 0;
+  const hora = () => new Date().toLocaleTimeString('es-UY', { hour12: false });
+  $('enviar').addEventListener('click', async () => {
+    const boton = $('enviar'), res = $('resultado'), det = $('detalle');
+    boton.disabled = true; res.className = ''; res.textContent = 'Enviando…';
+    try {
+      if (!window.Z18Cocina) throw Object.assign(new Error('cocina.js no cargó'), { code: 'sin-modulo' });
+      n++;
+      const prep = Z18Cocina.preparar({ nombre: 'PRUEBA ' + hora() + (n > 1 ? ' #' + n : ''), telefono: '11111111', tipoEntrega: 'retiro', items: ['1 x PRUEBA - no preparar'], notas: 'Pedido de prueba: no preparar.', total: 0 });
+      if (!prep.ok) throw Object.assign(new Error('datos inválidos: ' + prep.motivo), { code: 'datos' });
+      const r = await Z18Cocina.enviar(prep);
+      det.textContent = JSON.stringify({ codigo: prep.ref, id: prep.id, resultado: r }, null, 2);
+      if (r.ok) { res.className = 'ok'; res.textContent = '✔ Pedido de prueba enviado (código ' + prep.ref + '). Mirá la pantalla de cocina.'; }
+      else { res.className = 'mal'; res.textContent = '✖ No llegó. ' + (AYUDA[r.code] || 'Revisá los detalles técnicos y mandámelos.'); }
+    } catch (e) {
+      det.textContent = String(e && e.message || e) + (e && e.code ? '\ncódigo: ' + e.code : '');
+      res.className = 'mal'; res.textContent = '✖ No llegó. ' + (e && e.code === 'sin-modulo' ? 'Subí también cocina.js a la raíz del repositorio (junto a este archivo).' : 'Revisá los detalles técnicos.');
+    } finally { boton.disabled = false; }
+  });
+})();
+</script>
+</body>
+</html>

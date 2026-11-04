@@ -1,0 +1,95 @@
+    // ╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+    // ║  Z18 · COCINA (KDS)  —  BLOQUE NUEVO                                                                              ║
+    // ║  Pegalo DENTRO de «match /databases/{database}/documents { … }», junto a tus reglas de siempre (users, codigos…). ║
+    // ║  No toca ninguna regla existente: solo agrega las colecciones «staff» y «pedidos».                                ║
+    // ╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+    // ¿Quien consulta es personal de cocina? = existe el documento staff/{su UID}. Ese documento se crea A MANO en la consola de Firebase;
+    // ninguna página (ni la web, ni admin.html) puede crearlo, así que nadie se da permiso solo.
+    function kdsEsStaff() {
+      return request.auth != null && exists(/databases/$(database)/documents/staff/$(request.auth.uid));
+    }
+
+    match /staff/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;      // cada cuenta solo puede mirar SU documento (así admin.html sabe si tiene permiso)
+      allow list, create, update, delete: if false;                         // el personal se administra desde la consola de Firebase
+    }
+
+    // Los pedidos los crea CUALQUIER visitante con sesión de Firebase (incluida la anónima, que la web abre sola); solo el personal los lee y los mueve de estado.
+    match /pedidos/{pedidoId} {
+      allow create: if request.auth != null
+                    && pedidoId.matches('[A-Za-z0-9_-]{16,40}')
+                    && kdsPedidoNuevoOk(request.resource.data);
+      allow get, list: if kdsEsStaff();
+      allow update: if kdsEsStaff() && kdsCambioOk(resource.data, request.resource.data);
+      allow delete: if false;                                               // los pedidos nunca se borran (queda el historial)
+    }
+
+    // Un pedido nuevo tiene EXACTAMENTE estos 11 campos, con estos tipos y límites.
+    function kdsPedidoNuevoOk(d) {
+      return d.keys().hasOnly(['uid', 'nombre', 'telefono', 'tipoEntrega', 'direccion', 'items', 'notas', 'total', 'estado', 'createdAt', 'enviadoEn'])
+          && d.keys().hasAll(['uid', 'nombre', 'telefono', 'tipoEntrega', 'direccion', 'items', 'notas', 'total', 'estado', 'createdAt', 'enviadoEn'])
+          && d.uid == request.auth.uid                                      // el pedido queda a nombre de quien lo manda
+          && d.nombre is string && d.nombre.size() >= 2 && d.nombre.size() <= 60
+          && d.telefono is string && d.telefono.matches('[0-9]{8,15}')      // solo dígitos (la web lo normaliza a 598…)
+          && d.tipoEntrega in ['delivery', 'retiro']
+          && d.direccion is string
+          && (d.tipoEntrega == 'delivery' ? (d.direccion.size() >= 5 && d.direccion.size() <= 200) : d.direccion == '')
+          && kdsItemsOk(d.items)
+          && d.notas is string && d.notas.size() <= 500
+          && d.total is int && d.total >= 0 && d.total <= 1000000
+          && d.estado == 'pendiente'                                        // todo pedido nace «pendiente»
+          && d.createdAt == request.time                                    // la hora la pone el SERVIDOR (serverTimestamp), no el celular del cliente
+          && d.enviadoEn is int;
+    }
+
+    // De 1 a 25 líneas de texto («2 x Z18 Original»), de hasta 130 caracteres cada una (la primera no puede ir vacía). Las reglas no tienen bucles: por eso las 25 posiciones van escritas una por una.
+    function kdsItemsOk(items) {
+      return items is list && items.size() >= 1 && items.size() <= 25
+          && (items[0] is string && items[0].size() >= 1 && items[0].size() <= 130)
+          && (items.size() <= 1 || (items[1] is string && items[1].size() <= 130))
+          && (items.size() <= 2 || (items[2] is string && items[2].size() <= 130))
+          && (items.size() <= 3 || (items[3] is string && items[3].size() <= 130))
+          && (items.size() <= 4 || (items[4] is string && items[4].size() <= 130))
+          && (items.size() <= 5 || (items[5] is string && items[5].size() <= 130))
+          && (items.size() <= 6 || (items[6] is string && items[6].size() <= 130))
+          && (items.size() <= 7 || (items[7] is string && items[7].size() <= 130))
+          && (items.size() <= 8 || (items[8] is string && items[8].size() <= 130))
+          && (items.size() <= 9 || (items[9] is string && items[9].size() <= 130))
+          && (items.size() <= 10 || (items[10] is string && items[10].size() <= 130))
+          && (items.size() <= 11 || (items[11] is string && items[11].size() <= 130))
+          && (items.size() <= 12 || (items[12] is string && items[12].size() <= 130))
+          && (items.size() <= 13 || (items[13] is string && items[13].size() <= 130))
+          && (items.size() <= 14 || (items[14] is string && items[14].size() <= 130))
+          && (items.size() <= 15 || (items[15] is string && items[15].size() <= 130))
+          && (items.size() <= 16 || (items[16] is string && items[16].size() <= 130))
+          && (items.size() <= 17 || (items[17] is string && items[17].size() <= 130))
+          && (items.size() <= 18 || (items[18] is string && items[18].size() <= 130))
+          && (items.size() <= 19 || (items[19] is string && items[19].size() <= 130))
+          && (items.size() <= 20 || (items[20] is string && items[20].size() <= 130))
+          && (items.size() <= 21 || (items[21] is string && items[21].size() <= 130))
+          && (items.size() <= 22 || (items[22] is string && items[22].size() <= 130))
+          && (items.size() <= 23 || (items[23] is string && items[23].size() <= 130))
+          && (items.size() <= 24 || (items[24] is string && items[24].size() <= 130));
+    }
+
+    // El personal solo puede cambiar el estado (y dejar constancia de quién y cuándo): ningún otro campo del pedido se toca.
+    function kdsCambioOk(antes, despues) {
+      return despues.diff(antes).affectedKeys().hasOnly(['estado', 'estadoAnterior', 'actualizadoEn', 'actualizadoPor'])
+          && despues.estado is string
+          && despues.estadoAnterior == antes.estado                         // el cambio parte de lo que el tablero vio: si otro dispositivo se adelantó, se rechaza
+          && kdsTransicionOk(antes.estado, despues.estado)
+          && despues.actualizadoEn == request.time
+          && despues.actualizadoPor == request.auth.uid;
+    }
+
+    // Los 10 pasos permitidos (los mismos botones que tiene admin.html):
+    //   pendiente → en preparación | cancelado        en preparación → listo | pendiente (volver) | cancelado
+    //   listo → entregado | en preparación (volver) | cancelado        entregado → listo (deshacer)        cancelado → pendiente (reabrir)
+    function kdsTransicionOk(a, b) {
+      return (a == 'pendiente' && (b == 'preparando' || b == 'cancelado'))
+          || (a == 'preparando' && (b == 'listo' || b == 'pendiente' || b == 'cancelado'))
+          || (a == 'listo' && (b == 'entregado' || b == 'preparando' || b == 'cancelado'))
+          || (a == 'entregado' && b == 'listo')
+          || (a == 'cancelado' && b == 'pendiente');
+    }
